@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -50,18 +51,87 @@ func (server *Server) GetCachedToken(key string) (string, bool) {
 
 	entry, ok := server.TokenCache[key]
 	if !ok {
-		log.Println("No cache entry")
+		log.Printf("No cache entry for %s", key)
 		return "", false
 	}
 
 	if time.Since(entry.Creation) > server.Config.TokenCacheLifetime {
-		log.Println("Expired cache entry")
+		log.Printf("Expired cache entry for %s", key)
 		delete(server.TokenCache, key)
 		return "", false
 	}
 
-	log.Println("Valid cache entry")
+	log.Printf("Valid cache entry for %s", key)
 	return entry.Token, true
+}
+
+func parseFloatString(input string) float64 {
+	val, err := strconv.ParseFloat(strings.TrimSpace(input), 64)
+	if err != nil {
+		return 0
+	}
+	return val
+}
+
+func AddGuage(registry *prometheus.Registry, name, help, value string) error {
+	g := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: name,
+		Help: help,
+	})
+	err := registry.Register(g)
+	if err != nil {
+		return err
+	}
+	g.Set(parseFloatString(value))
+
+	return nil
+}
+
+func (server *Server) BuildMetrics(registry *prometheus.Registry, system *DashSystemStatus, power *DashPowerConsumption) error {
+	if err := AddGuage(registry, "total_max_watts", "Total max watts", power.TotalMaxWatts); err != nil {
+		return err
+	}
+
+	if err := AddGuage(registry, "total_used_watts", "Total used watts", power.TotalUsedWatts); err != nil {
+		return err
+	}
+
+	if err := AddGuage(registry, "total_available_watts", "Total available watts", power.TotalAvailableWatts); err != nil {
+		return err
+	}
+
+	outlets := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "outlet_watts",
+			Help: "Watts for each outlet (label: outlet)",
+		},
+		[]string{"outlet"},
+	)
+	registry.Register(outlets)
+	outlets.WithLabelValues("1").Set(parseFloatString(power.Out1Watts))
+	outlets.WithLabelValues("2").Set(parseFloatString(power.Out2Watts))
+	outlets.WithLabelValues("3").Set(parseFloatString(power.Out3Watts))
+	outlets.WithLabelValues("4").Set(parseFloatString(power.Out4Watts))
+	outlets.WithLabelValues("5").Set(parseFloatString(power.Out5Watts))
+	outlets.WithLabelValues("6").Set(parseFloatString(power.Out6Watts))
+
+	if err := AddGuage(registry, "voltage", "Input voltage", system.Voltage); err != nil {
+		return err
+	}
+
+	if err := AddGuage(registry, "total_current", "Total current draw", system.TotalCurrent); err != nil {
+		return err
+	}
+
+	if err := AddGuage(registry, "frequency", "Frequency in Hz", system.Frequency); err != nil {
+		return err
+	}
+
+	if err := AddGuage(registry, "temperature", "System temperature", system.Temperature[:len(system.Temperature)-3]); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (server *Server) ProbeHandler(w http.ResponseWriter, r *http.Request) {
@@ -112,28 +182,14 @@ func (server *Server) ProbeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(response)
-
 	reg := prometheus.NewRegistry()
 
-	g := prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "total_used_watts",
-		Help: "Total used watts",
-	})
-	err = reg.Register(g)
+	err = server.BuildMetrics(reg, &response.DashSystemStatus, &response.DashPowerConsumption)
 	if err != nil {
-		http.Error(w, "Failed to register gauge", http.StatusBadRequest)
+		log.Println(err)
+		http.Error(w, "Failed to build metrics", http.StatusBadRequest)
 		return
 	}
-
-	val, err := strconv.ParseFloat(response.DashPowerConsumption.TotalUsedWatts, 64)
-	if err != nil {
-		http.Error(w, "Failed to parse float", http.StatusBadRequest)
-		return
-	}
-	log.Printf("Val: %f, %s %v", val, response.DashPowerConsumption.TotalUsedWatts, response.DashPowerConsumption)
-
-	g.Set(val)
 
 	h := promhttp.HandlerFor(reg, promhttp.HandlerOpts{
 		Timeout: 5 * time.Second,

@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -164,16 +163,6 @@ func GetDashboardAgent(host, token string, insecureSkipVerify bool) (*DeviceResp
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("Got error code: %d", resp.StatusCode)
 		return nil, fmt.Errorf("failed login request. StatusCode: %d", resp.StatusCode)
-	}
-
-	// read body for debug, but allow reuse
-	buf, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("failed to read response body for debug: %v", err)
-	} else {
-		log.Printf("response body: %s", string(buf))
-		// restore body so json.Decoder can read it later
-		resp.Body = io.NopCloser(bytes.NewReader(buf))
 	}
 
 	var response DeviceResponse
