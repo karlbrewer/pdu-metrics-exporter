@@ -1,0 +1,13 @@
+host: "0.0.0.0" # Hostname for the exporter service to listen on
+port: 8080 # Port for the exporter to listen on
+default-username: "admin" # Username to use if a PDU does not override it
+default-password: "abc123" # Password to use if the PDU does not override it 
+pdus:
+  192.168.1.2: # IP or Hostname which can be used to reach the PDU
+    username: "user" # Username to override the default-username
+    password: "password" # Password to override the default-password
+    insecure-skip-verify: true
+  "https://pdu1.domain.lan":
+    username: "user2"
+    password: "password2"
+    insecure-skip-verify: true
