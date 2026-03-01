@@ -1,8 +1,12 @@
+This project is currently in progress and incomplete.
+
 # pdu-metrics-exporter
-Prometheus exporter for TRENDnet PDUs
+Prometheus exporter for TRENDnet PDUs. This project is neither affiliated nor endorsed by TRENDnet.
 
+# Target PDUs
+TPI-06
 
-Example Victoria Metrics config
+# Example Victoria Metrics config
 
 ```
 scrape_configs:
