@@ -1,0 +1,45 @@
+{
+  "dashSwitchInfo":{
+    "uptime":"0 day(s),08 hr(s),21 min(s),32 sec(s)",
+    "fw_version":"1.1.0.27"
+  },
+  "dashSystemStatus":{
+    "voltage":"110.0",
+    "total_current":"1.2",
+    "frequency":"60.0",
+    "temperature":"114.8 ℉"
+  },
+  "dashAdminInfo":{
+    "system_name":"TPI-06",
+    "system_location":"MyLocation",
+    "system_contact":"MyContact",
+    "serial_no":"E000000000000"
+  },
+  "dashEtherInfo":{
+    "mac_addr":"78:00:00:00:00:00",
+    "ipv4_addr":"192.168.1.210",
+    "ipv4_mask":"255.255.255.0",
+    "ipv4_gate":"192.168.1.1",
+    "ipv4_dhcp":false,
+    "ipv6_dhcp":false,
+    "ipv6_global_addr":"0000:0000::00\/64",
+    "ipv6_gate_addr":"0000:0000::0",
+    "ipv6_local_addr":"0000::0000:0000:0000:0000\/64"
+  },
+  "dashPowerConsumption":{
+    "total_max_watts":"1440.0",
+    "total_used_watts":"136.8",
+    "total_available_watts":"1303.2",
+    "out1_watts":"  15.8",
+    "out2_watts":"  12.7",
+    "out3_watts":"  28.0",
+    "out4_watts":"  51.1",
+    "out5_watts":"  29.2",
+    "out6_watts":"   0.0"
+  },
+  "errCode":0,
+  "message":"OK",
+  "status":"0",
+  "msg":"success"
+}
+
